@@ -1,59 +1,6 @@
 from iff import Record, File, parse_time
+from iff.model import Stop, PassingStop, Service, Timetable
 from iff.delivery import IdentificationRecord
-
-from copy import copy
-
-# Stop class
-class Stop:
-  # Constructor
-  def __init__(self, **kwargs):
-    self.station = kwargs.get('station')
-    self.arrival_time = kwargs.get('time') or kwargs.get('arrival_time')
-    self.arrival_platform = (kwargs.get('arrival_platform') or '') if self.arrival_time else ''
-    self.departure_time = kwargs.get('time') or kwargs.get('departure_time')
-    self.departure_platform = (kwargs.get('departure_platform') or '') if self.departure_time else ''
-
-  # Convert to string
-  def __str__(self):
-    return "{:<12}  {:<12}  {}".format(
-      "A {:<5} {:<4}".format(self.arrival_time,self.arrival_platform) if self.arrival_time else '',
-      "D {:<5} {:<4}".format(self.departure_time,self.departure_platform) if self.departure_time else '',
-      self.station
-    )
-
-# Passing stop class
-class PassingStop(Stop):
-  # Constructor
-  def __init__(self, **kwargs):
-    self.station = kwargs.get('station')
-    self.arrival_time = None
-    self.arrival_platform = ''
-    self.departure_time = None
-    self.departure_platform = ''
-
-# Service class
-class Service:
-  # Constructor
-  def __init__(self, **kwargs):
-    self.id = kwargs.get('id')
-    self.company = kwargs.get('company')
-    self.service_number = kwargs.get('service_number')
-    self.variant = kwargs.get('variant')
-    self.service_name = kwargs.get('service_name')
-    self.footnote = kwargs.get('footnote')
-    self.transport_mode = kwargs.get('transport_mode')
-    self.attributes = kwargs.get('attributes') or []
-    self.stops = kwargs.get('stops') or []
-
-  # Convert to string
-  def __str__(self):
-    return "{} {} {}to {} {}".format(
-      self.company,
-      self.transport_mode,
-      (str(self.service_number) + ' ') if self.service_number != 0 else '',
-      self.stops[-1].station,
-      ("(" + ", ".join(str(attribute) for attribute in self.attributes) + ")") if self.attributes else ''
-    )
 
 # Service record class
 class ServiceRecord(Record):
@@ -191,13 +138,13 @@ identifiers = {
 }
 
 # Timetable file
-class TimetableFile(File, list):
+class TimetableFile(File, Timetable):
   # Constructor
   def __init__(self, identification_record):
     super(TimetableFile,self).__init__(identification_record)
 
   # Split a service in multiple services
-  def split_services(self, service_record):
+  def _split_services(self, service_record):
     # For each service add a service to the file
     for service_number_record in service_record.service_numbers:
       # Create a new service
@@ -242,7 +189,7 @@ class TimetableFile(File, list):
         if isinstance(record,ServiceRecord):
           # Check if a service is selected, then add it
           if current_service is not None:
-            timetable_file.split_services(current_service)
+            timetable_file._split_services(current_service)
 
           # Create a new service
           current_service = record
@@ -309,7 +256,7 @@ class TimetableFile(File, list):
 
       # Add the last service
       if current_service is not None:
-        timetable_file.split_services(current_service)
+        timetable_file._split_services(current_service)
 
       # Return the file
       return timetable_file

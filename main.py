@@ -10,24 +10,19 @@ def main():
   today = date(2018,4,13)
 
   # Print total services
-  print("{} total services".format(len(tt.timetable)))
+  print("{} total services".format(len(tt.services)))
 
   # Print valid services
-  valid_services = [service for service in tt.timetable if service.footnote.is_valid(today)]
+  valid_services = tt.services.filter_valid_on(today)
   print("{} services valid on {}".format(len(valid_services),today))
 
   # Get services through Utrecht Centraal
   ut = tt.stations.get('ut')
-  ut_services = [service for service in valid_services if ut in (stop.station for stop in service.stops if not isinstance(stop,iff.timetable.PassingStop) and stop.departure_time is not None)]
-  print("{} services departing from {}".format(len(ut_services),ut))
-  print()
+  ut_services = valid_services.map_departs_from(ut)
+  print("{} services departing from {}\n".format(len(ut_services.items()),ut))
 
-  ut_services.sort(key = lambda service: next(stop for stop in service.stops if stop.station == ut).departure_time)
-
-  print(" TIME  PLT  TRAIN")
-  for service in ut_services:
-    at_ut = next(stop for stop in service.stops if stop.station == ut)
-    print("{:>5}  {:>3}  {}".format(str(at_ut.departure_time),at_ut.departure_platform,str(service)))
+  for stop, service in ut_services.items():
+    print("{:>5}  {:>3}  {}".format(str(stop.departure_time),stop.departure_platform,str(service)))
 
 
 # Execute the main function

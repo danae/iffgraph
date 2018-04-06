@@ -13,7 +13,7 @@ class FootnoteRecord(Record):
     )
 
   # Return if a date is valid
-  def is_valid(self, date):
+  def valid_on(self, date):
     # Check if the date is in range
     if date < self.first_day or date > self.last_day:
       return False

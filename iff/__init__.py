@@ -117,6 +117,6 @@ class IFF:
       raise RuntimeException("The TRNSMODE file is not valid")
 
     # Read the TIMETBLS file
-    self.timetable = TimetableFile.read("{}/timetbls.dat".format(directory),self)
-    if not self.timetable.is_valid(self.delivery):
+    self.services = TimetableFile.read("{}/timetbls.dat".format(directory),self)
+    if not self.services.is_valid(self.delivery):
       raise RuntimeException("The TIMETBLS file is not valid")
