@@ -1,4 +1,4 @@
-from iff import Record, DictFile
+from iff.parser import Record, File, Database
 from iff.delivery import IdentificationRecord
 
 # Transport mode record
@@ -17,10 +17,10 @@ class TransportModeRecord(Record):
 
 
 # Transport mode file
-class TransportModeFile(DictFile):
+class TransportModeFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(TransportModeFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a file
   @classmethod
@@ -34,7 +34,7 @@ class TransportModeFile(DictFile):
       # Iterate over the file
       for string in file:
         record = TransportModeRecord.read(string,context)
-        transport_mode_file.append(record)
+        transport_mode_file.add(record)
 
       # Return the file
       return transport_mode_file

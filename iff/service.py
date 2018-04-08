@@ -1,6 +1,8 @@
-from iff import Record, File, parse_time
-from iff.model import Stop, PassingStop, Service, Timetable
+from iff.parser import Time, Record, File
+from iff.model import Stop, Service, ServiceList
 from iff.delivery import IdentificationRecord
+
+from copy import copy
 
 # Service record class
 class ServiceRecord(Record):
@@ -68,7 +70,7 @@ class StartRecord(Record):
   def read(cls, string, context):
     return cls(
       station = context.stations.get(string[1:8].strip()),
-      departure_time = parse_time(string[9:13])
+      departure_time = Time.parse(string[9:13])
     )
 
 # Stop with direct continuation record class
@@ -78,7 +80,7 @@ class ContinuationRecord(Record):
   def read(cls, string, context):
     return cls(
       station = context.stations.get(string[1:8].strip()),
-      time = parse_time(string[9:13])
+      time = Time.parse(string[9:13])
     )
 
 # No stop record class
@@ -97,8 +99,8 @@ class IntervalRecord(Record):
   def read(cls, string, context):
     return cls(
       station = context.stations.get(string[1:8].strip()),
-      arrival_time = parse_time(string[9:13]),
-      departure_time = parse_time(string[14:18])
+      arrival_time = Time.parse(string[9:13]),
+      departure_time = Time.parse(string[14:18])
     )
 
 # Last stop record class
@@ -108,7 +110,7 @@ class FinalRecord(Record):
   def read(cls, string, context):
     return cls(
       station = context.stations.get(string[1:8].strip()),
-      arrival_time = parse_time(string[9:13])
+      arrival_time = Time.parse(string[9:13])
     )
 
 # Platform record class
@@ -121,6 +123,7 @@ class PlatformRecord(Record):
       departure_platform_name = string[7:12].strip(),
       footnote = context.footnotes.get(int(string[13:18]))
     )
+
 
 # Record identifiers
 identifiers = {
@@ -137,27 +140,47 @@ identifiers = {
   '?': PlatformRecord
 }
 
-# Timetable file
-class TimetableFile(File, Timetable):
+
+# Service file
+class ServiceFile(File, ServiceList):
   # Constructor
   def __init__(self, identification_record):
-    super(TimetableFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Split a service in multiple services
   def _split_services(self, service_record):
     # For each service add a service to the file
     for service_number_record in service_record.service_numbers:
+      # Create the stop list
+      stop_idx = 0
+      stops = []
+
+      # Iterate over the stops and append them to the list
+      for stop in service_record.stops:
+        # Check if the service stops here
+        if not stop.is_passing():
+          stop_idx += 1
+
+        # Add the stop if in the boundaries
+        if stop_idx >= service_number_record.first_stop and stop_idx <= service_number_record.last_stop:
+          stops.append(copy(stop))
+
+      # Strip the stops
+      stops[0].arrival_time = None
+      stops[0].arrival_platform = ''
+      stops[-1].departure_time = None
+      stops[-1].departure_platform = ''
+
       # Create a new service
       service = Service(
-        id = service_record.id,
+        id = service_number_record.service_number,
         company = service_number_record.company,
-        service_number = service_number_record.service_number,
         variant = service_number_record.variant,
-        service_name = service_number_record.service_name,
+        name = service_number_record.service_name,
         footnote = service_record.footnote,
         transport_mode = service_record.transport_mode,
         attributes = service_record.attributes,
-        stops = service_record.stops
+        stops = stops
       )
 
       # Append the service
@@ -227,22 +250,13 @@ class TimetableFile(File, Timetable):
           # Append the attribute
           current_service.attributes.append(record.attribute)
 
-        elif type(record) in [StartRecord, ContinuationRecord, IntervalRecord, FinalRecord]:
+        elif type(record) in [StartRecord, ContinuationRecord, PassingRecord, IntervalRecord, FinalRecord]:
           # Check if a service is selected
           if current_service is None:
             raise RuntimeError("No service is selected")
 
           # Append the stop
           current_stop = Stop(**record.__dict__)
-          current_service.stops.append(current_stop)
-
-        elif isinstance(record,PassingRecord):
-          # Check if a service is selected
-          if current_service is None:
-            raise RuntimeError("No service is selected")
-
-          # Append the stop
-          current_stop = PassingStop(**record.__dict__)
           current_service.stops.append(current_stop)
 
         elif isinstance(record,PlatformRecord):

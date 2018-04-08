@@ -1,4 +1,4 @@
-from iff import Record, DictFile
+from iff.parser import Record, File, Database
 from iff.delivery import IdentificationRecord
 
 # Country record class
@@ -16,11 +16,12 @@ class CountryRecord(Record):
   def __str__(self):
     return self.name
 
+
 # Country file class
-class CountryFile(DictFile):
+class CountryFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(CountryFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a file
   @classmethod
@@ -34,7 +35,7 @@ class CountryFile(DictFile):
       # Iterate over the file
       for string in file:
         record = CountryRecord.read(string,context)
-        country_file.append(record)
+        country_file.add(record)
 
       # Return the file
       return country_file

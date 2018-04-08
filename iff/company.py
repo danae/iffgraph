@@ -1,4 +1,4 @@
-from iff import Record, DictFile
+from iff.parser import Record, File, Database
 from iff.delivery import IdentificationRecord
 
 # COmpany record class
@@ -17,11 +17,12 @@ class CompanyRecord(Record):
   def __str__(self):
     return self.name
 
+
 # Company file class
-class CompanyFile(DictFile):
+class CompanyFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(CompanyFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a file
   @classmethod
@@ -35,7 +36,7 @@ class CompanyFile(DictFile):
       # Iterate over the file
       for string in file:
         record = CompanyRecord.read(string,context)
-        company_file.append(record)
+        company_file.add(record)
 
       # Return the file
       return company_file

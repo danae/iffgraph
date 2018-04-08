@@ -1,4 +1,4 @@
-from iff import Record, DictFile
+from iff.parser import Record, File, Database
 from iff.delivery import IdentificationRecord
 
 # Attribute record class
@@ -16,11 +16,12 @@ class AttributeRecord(Record):
   def __str__(self):
     return self.description
 
+
 # Attribute file class
-class AttributeFile(DictFile):
+class AttributeFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(AttributeFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a file
   @classmethod
@@ -34,7 +35,7 @@ class AttributeFile(DictFile):
       # Iterate over the file
       for string in file:
         record = AttributeRecord.read(string,context)
-        attribute_file.append(record)
+        attribute_file.add(record)
 
       # Return the file
       return attribute_file

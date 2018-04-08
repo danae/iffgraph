@@ -1,4 +1,4 @@
-from iff import Record, DictFile
+from iff.parser import Record, File, Database
 from iff.delivery import IdentificationRecord
 
 # Footnote record class
@@ -35,16 +35,18 @@ class VectorRecord(Record):
       vector = [character == '1' for character in string]
     )
 
+
 # Record identifiers
 identifiers = {
   '#': FootnoteRecord
 }
 
+
 # Footnote file class
-class FootnoteFile(DictFile):
+class FootnoteFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(FootnoteFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a footnote file
   @classmethod
@@ -71,7 +73,7 @@ class FootnoteFile(DictFile):
         if isinstance(record,FootnoteRecord):
           # Check if a footnote is selected, then add it
           if current_footnote is not None:
-            footnote_file.append(current_footnote)
+            footnote_file.add(current_footnote)
 
           # Create a new footnote
           current_footnote = record
@@ -86,7 +88,7 @@ class FootnoteFile(DictFile):
 
       # Append the last footnote
       if current_footnote is not None:
-        footnote_file.append(current_footnote)
+        footnote_file.add(current_footnote)
 
       # Return the file
       return footnote_file

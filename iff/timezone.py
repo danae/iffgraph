@@ -1,4 +1,4 @@
-from iff import Record, DictFile, parse_date
+from iff.parser import Date, Record, File, Database
 from iff.delivery import IdentificationRecord
 
 from datetime import timedelta
@@ -19,8 +19,8 @@ class EarlierPeriodRecord(Record):
   def read(cls, string):
     return cls(
       offset = timedelta(hours = int(string[1:3]) * -1),
-      first_day = parse_date(string[4:12]),
-      last_day = parse_date(string[13:21])
+      first_day = Date.parse(string[4:12]),
+      last_day = Date.parse(string[13:21])
     )
 
 # Later period record
@@ -30,9 +30,10 @@ class LaterPeriodRecord(Record):
   def read(cls, string):
     return cls(
       offset = timedelta(hours = int(string[1:3])),
-      first_day = parse_date(string[4:12]),
-      last_day = parse_date(string[13:21])
+      first_day = Date.parse(string[4:12]),
+      last_day = Date.parse(string[13:21])
     )
+
 
 # Record identifiers
 identifiers = {
@@ -41,11 +42,12 @@ identifiers = {
   '+': LaterPeriodRecord
 }
 
+
 # Timezone file class
-class TimezoneFile(DictFile):
+class TimezoneFile(File, Database):
   # Constructor
   def __init__(self, identification_record):
-    super(TimezoneFile,self).__init__(identification_record)
+    File.__init__(self,identification_record)
 
   # Read a file
   @classmethod
@@ -73,7 +75,7 @@ class TimezoneFile(DictFile):
           # Check if a timezone is selected, then add it
           if current_timezone is not None:
             # Add the timezone to the file
-            timezone_file.append(current_timezone)
+            timezone_file.add(current_timezone)
 
           # Create a new timezone
           current_timezone = record
@@ -91,7 +93,7 @@ class TimezoneFile(DictFile):
       # Append the last timezone
       if current_timezone is not None:
         # Add the timezone to the file
-        timezone_file.append(current_timezone)
+        timezone_file.add(current_timezone)
 
       # Return the file
       return timezone_file

@@ -1,4 +1,4 @@
-from iff import Record, File, parse_date
+from iff.parser import Date, Record, File
 
 # Identification record class
 class IdentificationRecord(Record):
@@ -7,8 +7,8 @@ class IdentificationRecord(Record):
   def read(cls, string, context):
     return cls(
       company_number = int(string[1:4]),
-      first_day = parse_date(string[5:13]),
-      last_day = parse_date(string[14:22]),
+      first_day = Date.parse(string[5:13]),
+      last_day = Date.parse(string[14:22]),
       version_number = int(string[23:27]),
       description = string[28:58].strip()
     )
