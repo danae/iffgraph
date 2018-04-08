@@ -20,7 +20,7 @@ def main():
   for stop, service in ut_timetable:
     # Print service at this station
     if not stop.is_departing():
-      print("{:>5} A  {:>3}  {}".format(str(stop.arrival_time),stop.departure_platform,str(service)))
+      print("{:>5} A  {:>3}  {}".format(str(stop.arrival_time),stop.arrival_platform,str(service)))
     else:
       print("{:>5}    {:>3}  {}".format(str(stop.departure_time),stop.departure_platform,str(service)))
 
